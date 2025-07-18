@@ -29,33 +29,34 @@ function preload() {
     this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
     
     // Load the background image
-    this.load.image('crowd', 'assets/crowd1.png');
+    this.load.image('crowd', 'assets/crowd1.jpg');
     this.load.image('jumbotron', 'assets/jumbotron.png');
     // Close-up crowd image that will appear on the jumbotron screen
-    this.load.image('crowd_big', 'assets/closeup-crowd-big.png');
+    this.load.image('crowd_big', 'assets/closeup-crowd-big.jpg');
     // --------------------------------------------------------------
     // NEW: Load 20 random close-up textures and the target couple
     for (let i = 1; i <= 20; i++) {
-        this.load.image(`crowd${i}`, `assets/crowdshots/close-up-crowd${i}.png`);
+        this.load.image(`crowd${i}`, `assets/crowdshots/close-up-crowd${i}.webp`);
     }
     // Load assets based on mode
     if (VIDEO_MODE) {
         // Load the couple video that will play when found
         this.load.video('couple_video', 'assets/cheating-video-44442.webm', 'loadeddata', false, true);
-        // Load the couple PNG (first frame of the video)
-        this.load.image('couple', 'assets/couple.png');
+        // Load the couple WebP (first frame of the video)
+        this.load.image('couple', 'assets/couple.webp');
     } else {
-        // Load original couple PNGs
-        this.load.image('target_happy', 'assets/couple1.png');     // couple smiling
-        this.load.image('target_surprised', 'assets/couple2.png'); // couple surprised
+        // Load original couple WebPs
+        this.load.image('target_happy', 'assets/couple1.webp');     // couple smiling
+        this.load.image('target_surprised', 'assets/couple2.webp'); // couple surprised
     }
     // Load the camera operator
-    this.load.image('cameraman', 'assets/cameraman.png');
+    this.load.image('cameraman', 'assets/cameraman.webp');
+    
     
     // Load background music
-    this.load.audio('bgmusic', 'assets/vida8bit.wav');
+    this.load.audio('bgmusic', 'assets/vida8bit.mp3');
     // Load win sound effect
-    this.load.audio('winsound', 'assets/win-sound.wav');
+    this.load.audio('winsound', 'assets/win-sound.mp3');
 
     // Load win video (will play on successful framing)
     this.load.video('win_clip', 'assets/cheating-video-44442.webm', 'loadeddata', false, true);
@@ -201,15 +202,15 @@ function create() {
         const introScreen = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2);
         introScreen.setDepth(200);
         
-        // Modal background - slightly wider
+        // Modal background - wider and taller for sponsor logo
         const modalWidth = 850;
-        const modalHeight = 450;
+        const modalHeight = 520;
         const introBg = this.add.rectangle(0, 0, modalWidth, modalHeight, 0x000000, 0.9);
         introBg.setStrokeStyle(4, 0xffffff);
         introScreen.add(introBg);
         
-        // Title text (good readable size)
-        const titleText = this.add.text(0, -75, 'FIND THE COLDPLAY\nCANOODLERS!', {
+        // Title text (moved up a bit)
+        const titleText = this.add.text(0, -90, 'FIND THE COLDPLAY\nCANOODLERS!', {
             fontSize: '48px',
             color: '#ffffff',
             fontFamily: '"Press Start 2P", monospace',
@@ -218,8 +219,8 @@ function create() {
         }).setOrigin(0.5);
         introScreen.add(titleText);
         
-        // Instructions (good size)
-        const instructionText = this.add.text(0, 45, 'Move your mouse to search the crowd\nHold the target for 1 second to win!', {
+        // Instructions (moved up a bit)
+        const instructionText = this.add.text(0, 5, 'Move your mouse to search the crowd\nHold the target for 1 second to win!', {
             fontSize: '22px',
             color: '#ffffff',
             fontFamily: '"Press Start 2P", monospace',
@@ -227,6 +228,7 @@ function create() {
             lineSpacing: 12
         }).setOrigin(0.5);
         introScreen.add(instructionText);
+        
         
         // Close function
         const closeIntro = () => {
@@ -249,7 +251,7 @@ function create() {
         introScreen.add(xButton);
         
         // Red CLOSE button at bottom
-        const closeButton = this.add.text(0, modalHeight / 2 - 55, 'CLOSE', {
+        const closeButton = this.add.text(0, modalHeight / 2 - 65, 'CLOSE', {
             fontSize: '28px',
             color: '#ff0000',
             fontFamily: '"Press Start 2P", monospace',
