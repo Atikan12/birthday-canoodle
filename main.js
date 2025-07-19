@@ -7,12 +7,22 @@ const VIDEO_MODE = true; // <-- set to false to use original couple1.png/couple2
 // Toggle this to enable/disable background music
 const MUSIC_ENABLED = true; // <-- set to false to disable music
 
+// NFT-specific configuration
+const NFT_MODE = true; // Enable NFT-specific features
+
+// Detect if running in iframe (for OpenSea/NFT platforms)
+const isInIframe = window.self !== window.top;
+
+// Detect Web3 wallet presence
+const hasWeb3 = typeof window.ethereum !== 'undefined';
+
 const config = {
     type: Phaser.AUTO,
-    // Responsive scaling configuration
+    // Responsive scaling configuration with iframe support
     scale: {
         mode: Phaser.Scale.FIT,            // Maintain aspect ratio but fit within the parent
         autoCenter: Phaser.Scale.CENTER_BOTH, // Center the canvas horizontally & vertically
+        parent: 'game-container',          // Target the container div for iframe compatibility
         width: 1536,
         height: 1024,
     },
@@ -63,6 +73,12 @@ function preload() {
 }
 
 function create() {
+    // Hide loading screen once game starts
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        document.body.classList.add('game-loaded');
+    }
+    
     // Add the image at the top-left corner
     const bg = this.add.image(0, 0, 'crowd').setOrigin(0, 0);
 
@@ -173,6 +189,18 @@ function create() {
         fontFamily: 'Arial',
     }).setDepth(100);
     
+    // NFT-specific UI elements
+    if (NFT_MODE) {
+        // Add platform indicator if in iframe
+        if (isInIframe) {
+            const platformText = this.add.text(this.cameras.main.width - 16, 50, 'OPENSEA', {
+                fontSize: '12px',
+                color: '#888888',
+                fontFamily: '"Press Start 2P", monospace'
+            }).setOrigin(1, 0).setDepth(100);
+        }
+    }
+    
     // Add background music (but don't start yet)
     const bgMusic = this.sound.add('bgmusic', { loop: true, volume: 0.5 });
     // Add win sound effect
@@ -219,15 +247,35 @@ function create() {
         }).setOrigin(0.5);
         introScreen.add(titleText);
         
-        // Instructions (moved up a bit)
-        const instructionText = this.add.text(0, 5, 'Move your mouse to search the crowd\nHold the target for 1 second to win!', {
-            fontSize: '22px',
-            color: '#ffffff',
-            fontFamily: '"Press Start 2P", monospace',
-            align: 'center',
-            lineSpacing: 12
-        }).setOrigin(0.5);
+        // Instructions with NFT context
+        let instructionText;
+        if (NFT_MODE && isInIframe) {
+            instructionText = this.add.text(0, 5, 'Interactive NFT Game\nMove your mouse to search the crowd\nHold the target for 1 second to win!', {
+                fontSize: '20px',
+                color: '#ffffff',
+                fontFamily: '"Press Start 2P", monospace',
+                align: 'center',
+                lineSpacing: 12
+            }).setOrigin(0.5);
+        } else {
+            instructionText = this.add.text(0, 5, 'Move your mouse to search the crowd\nHold the target for 1 second to win!', {
+                fontSize: '22px',
+                color: '#ffffff',
+                fontFamily: '"Press Start 2P", monospace',
+                align: 'center',
+                lineSpacing: 12
+            }).setOrigin(0.5);
+        }
         introScreen.add(instructionText);
+        
+        // Add attribution
+        const attribution = this.add.text(0, 60, 'made by gamejew aka songadaymann aka jonathan mann', {
+            fontSize: '16px',
+            color: '#ffaa00',
+            fontFamily: '"Press Start 2P", monospace',
+            align: 'center'
+        }).setOrigin(0.5);
+        introScreen.add(attribution);
         
         
         // Close function
@@ -628,6 +676,16 @@ function create() {
         }
     });
 
+    // NFT-specific social sharing function
+    this.shareScore = (score) => {
+        if (NFT_MODE && !isInIframe) {
+            const gameTitle = "Find the Coldplay Canoodlers";
+            const tweetText = `Just scored ${score} points in "${gameTitle}" - an interactive NFT game! 🎮✨ #NFTGaming #Coldplay #Web3`;
+            const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+            window.open(tweetUrl, '_blank');
+        }
+    };
+
     // ----- WIN HANDLER (automatic, no click) ----------------
     this.triggerWin = () => {
         this.isLocked = true;
@@ -637,6 +695,27 @@ function create() {
         
         this.score += 10;
         scoreText.setText(`Score: ${this.score}`);
+        
+        // NFT-specific milestone celebrations
+        if (NFT_MODE && this.score % 50 === 0) {
+            // Special celebration for milestone scores in NFT mode
+            const milestoneText = this.add.text(this.cameras.main.width / 2, 100, `MILESTONE: ${this.score} POINTS!`, {
+                fontSize: '24px',
+                color: '#00ff88',
+                fontFamily: '"Press Start 2P", monospace',
+                align: 'center'
+            }).setOrigin(0.5).setDepth(200);
+            
+            // Fade out milestone text
+            this.tweens.add({
+                targets: milestoneText,
+                alpha: 0,
+                y: 50,
+                duration: 3000,
+                ease: 'Power2',
+                onComplete: () => milestoneText.destroy()
+            });
+        }
 
         if (VIDEO_MODE) {
             // Set flag to hide couple image
@@ -691,5 +770,58 @@ function update(time, delta) {
     }
 }
 // -----------------------------------------------------------
-// Instantiate the Phaser game
-const game = new Phaser.Game(config); 
+// NFT-ready game initialization with error handling
+function initGame() {
+    try {
+        // Create the Phaser game instance
+        const game = new Phaser.Game(config);
+        
+        // Add global error handling for NFT platforms
+        window.addEventListener('error', (e) => {
+            console.warn('Game error (NFT-safe):', e.message);
+            // Don't throw errors that could break NFT platform display
+        });
+        
+        // Expose game instance for external access (useful for NFT platforms)
+        if (NFT_MODE) {
+            window.ColdplayGame = {
+                game: game,
+                version: '1.0.0',
+                type: 'Interactive NFT Game',
+                shareScore: function(score) {
+                    if (game.scene.scenes[0] && game.scene.scenes[0].shareScore) {
+                        game.scene.scenes[0].shareScore(score);
+                    }
+                }
+            };
+        }
+        
+        return game;
+    } catch (error) {
+        console.error('Failed to initialize game:', error);
+        
+        // Show fallback message if game fails to load
+        const fallbackDiv = document.createElement('div');
+        fallbackDiv.innerHTML = `
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+                color: white;
+                font-family: 'Press Start 2P', monospace;
+                font-size: 16px;
+            ">
+                <div>GAME LOADING ERROR</div>
+                <div style="font-size: 12px; margin-top: 20px; color: #888;">
+                    Please refresh or try again
+                </div>
+            </div>
+        `;
+        document.getElementById('game-container').appendChild(fallbackDiv);
+    }
+}
+
+// Initialize the game
+const game = initGame(); 
