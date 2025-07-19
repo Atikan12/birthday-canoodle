@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://songaday.mypinata.cloud/ipfs/bafybeialxfcsad2nn6pc5japybfup5ro7x4eyh4fza45e5mgewvkydjswq/",
+      "permanent": true
+    }
+  ]
+}
