@@ -1,14 +1,14 @@
 // Toggle this to enable/disable debug visuals
-const DEBUG = false; // <-- set to false to hide debug overlays
+const DEBUG = false;
 
-// Toggle this to switch between video mode and original PNG couple mode
-const VIDEO_MODE = true; // <-- set to false to use original couple1.png/couple2.png system
+// Toggle this to switch between video mode and original birthday item mode
+const VIDEO_MODE = false; // Birthday items don't need video mode
 
 // Toggle this to enable/disable background music
-const MUSIC_ENABLED = true; // <-- set to false to disable music
+const MUSIC_ENABLED = true;
 
-// NFT-specific configuration
-const NFT_MODE = true; // Enable NFT-specific features
+// Birthday game configuration
+const BIRTHDAY_MODE = true; // Enable birthday-specific features
 
 // Detect if running in iframe (for OpenSea/NFT platforms)
 const isInIframe = window.self !== window.top;
@@ -22,11 +22,9 @@ const config = {
     scale: {
         mode: Phaser.Scale.FIT,            // Maintain aspect ratio but fit within the parent
         autoCenter: Phaser.Scale.CENTER_BOTH, // Center the canvas horizontally & vertically
-        parent: 'game-container',          // Target the container div for iframe compatibility
         width: 1536,
         height: 1024,
     },
-    backgroundColor: "#000000",
     scene: {
         preload: preload,
         create: create,
@@ -38,29 +36,15 @@ function preload() {
     // Load Google Font
     this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
     
-    // Load the background image
-    this.load.image('crowd', 'assets/crowd1.jpg');
-    this.load.image('jumbotron', 'assets/jumbotron.png');
-    // Close-up crowd image that will appear on the jumbotron screen
-    this.load.image('crowd_big', 'assets/closeup-crowd-big.jpg');
-    // --------------------------------------------------------------
-    // NEW: Load 20 random close-up textures and the target couple
+    // Load party background
+    this.load.image('party_bg', 'https://images.pexels.com/photos/1190298/pexels-photo-1190298.jpeg');
+    this.load.image('party_screen', 'assets/jumbotron.png'); // Reuse jumbotron as party screen
+    this.load.image('party_big', 'https://images.pexels.com/photos/1157557/pexels-photo-1157557.jpeg');
+    
+    // Load birthday items instead of crowd shots
     for (let i = 1; i <= 20; i++) {
-        this.load.image(`crowd${i}`, `assets/crowdshots/close-up-crowd${i}.webp`);
+        this.load.image(`item${i}`, `assets/crowdshots/close-up-crowd${i}.webp`); // Reuse existing assets as "items"
     }
-    // Load assets based on mode
-    if (VIDEO_MODE) {
-        // Load the couple video that will play when found
-        this.load.video('couple_video', 'assets/cheating-video-44442.webm', 'loadeddata', false, true);
-        // Load the couple WebP (first frame of the video)
-        this.load.image('couple', 'assets/couple.webp');
-    } else {
-        // Load original couple WebPs
-        this.load.image('target_happy', 'assets/couple1.webp');     // couple smiling
-        this.load.image('target_surprised', 'assets/couple2.webp'); // couple surprised
-    }
-    // Load the camera operator
-    this.load.image('cameraman', 'assets/cameraman.webp');
     
     
     // Load background music
@@ -769,59 +753,6 @@ function update(time, delta) {
         this.targetHoldTime = 0;
     }
 }
-// -----------------------------------------------------------
-// NFT-ready game initialization with error handling
-function initGame() {
-    try {
-        // Create the Phaser game instance
-        const game = new Phaser.Game(config);
-        
-        // Add global error handling for NFT platforms
-        window.addEventListener('error', (e) => {
-            console.warn('Game error (NFT-safe):', e.message);
-            // Don't throw errors that could break NFT platform display
-        });
-        
-        // Expose game instance for external access (useful for NFT platforms)
-        if (NFT_MODE) {
-            window.ColdplayGame = {
-                game: game,
-                version: '1.0.0',
-                type: 'Interactive NFT Game',
-                shareScore: function(score) {
-                    if (game.scene.scenes[0] && game.scene.scenes[0].shareScore) {
-                        game.scene.scenes[0].shareScore(score);
-                    }
-                }
-            };
-        }
-        
-        return game;
-    } catch (error) {
-        console.error('Failed to initialize game:', error);
-        
-        // Show fallback message if game fails to load
-        const fallbackDiv = document.createElement('div');
-        fallbackDiv.innerHTML = `
-            <div style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                text-align: center;
-                color: white;
-                font-family: 'Press Start 2P', monospace;
-                font-size: 16px;
-            ">
-                <div>GAME LOADING ERROR</div>
-                <div style="font-size: 12px; margin-top: 20px; color: #888;">
-                    Please refresh or try again
-                </div>
-            </div>
-        `;
-        document.getElementById('game-container').appendChild(fallbackDiv);
-    }
-}
 
 // Initialize the game
-const game = initGame(); 
+const game = new Phaser.Game(config);
